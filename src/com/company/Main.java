@@ -9,9 +9,7 @@ public class Main {
 
     public static void main(String[] args){
 
-        Pattern pat;
-        Matcher mat;
-        String input_str ="      +3.4 +         43.5-43.";
+        String input_str ="15-(4+5) ";
 
         Analysis_of_formulas aof = new Analysis_of_formulas();
 
