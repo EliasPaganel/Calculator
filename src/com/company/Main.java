@@ -1,5 +1,7 @@
 package com.company;
 
+import com.company.Classes.Analysis_of_formulas;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,8 +11,15 @@ public class Main {
 
         Pattern pat;
         Matcher mat;
-        String input_str [] ={"-17 +       (  11 /     5.5    + (4-5)*4.0)*2"} ;
+        String input_str ="      +3.4 +         43.5-43.";
 
+        Analysis_of_formulas aof = new Analysis_of_formulas();
+
+        try {
+            System.out.println("result: " + aof.Parse(input_str));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 
 
