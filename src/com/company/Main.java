@@ -9,7 +9,8 @@ public class Main {
 
     public static void main(String[] args){
 
-        String input_str ="15-(4+5) ";
+
+        String input_str ="sqrt(100) +cos(0)+sqrt";
 
         Analysis_of_formulas aof = new Analysis_of_formulas();
 

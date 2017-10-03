@@ -10,4 +10,8 @@ class Result
         this.accumulator = accumulator;
         this.remainder = remainder;
     }
+
+    public Result() {
+
+    }
 }
