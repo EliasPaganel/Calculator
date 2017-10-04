@@ -4,34 +4,20 @@ import com.sun.org.apache.regexp.internal.RE;
 import com.sun.org.apache.xpath.internal.SourceTree;
 
 import java.util.HashMap;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Analysis_of_formulas {
 
-    private HashMap<String, Double> variables = new HashMap<>();//Для хранения переменных вводимых с клавиатуры
-
-
-    //Getter and Setter
-    private Double getVariables(String variableName) {
-        if(!variables.containsKey(variableName))
-        {
-            //System.out.println("Error: Try get unexists variable '"+variableName+"'");
-            return 0.0;
-        }
-        return variables.get(variableName);
-    }
-
-
-    private void setVariables(String variableName, Double variableValue) {
-        this.variables.put(variableName, variableValue);
-    }
 
     //Functions
     public double Parse(String str) throws Exception {
 
         str = Del_Space(str);//Убираем пробелы
+
+        str = Scientific_record_number(str);//Прячем научную запись числа в переменную
 
         System.out.println(str);//ВЫводим безпробельную формулу
 
@@ -49,8 +35,23 @@ public class Analysis_of_formulas {
 
     private Result PlusMinus(String str) throws Exception {
 
+        char ch = 0;
+        if(str.charAt(0) == '+' || str.charAt(0) == '-')
+        {
+            ch = str.charAt(0);
+            str = str.substring(1);
+        }
+
         Result result = MulDiv(str);
-        double accumulator = result.accumulator;
+
+        double accumulator;
+
+        if(ch == '-')
+        {
+            accumulator = -result.accumulator;
+        }
+        else
+            accumulator = result.accumulator;
 
         while(!result.remainder.isEmpty() && (result.remainder.charAt(0) == '+' || result.remainder.charAt(0) == '-'))
         {
@@ -111,7 +112,7 @@ public class Analysis_of_formulas {
 
     private Result FunctionVariable(String str) throws Exception {
 
-        Pattern pat = Pattern.compile("[A-Z,a-z]+[A-Z,a-z,0-9]*");
+        Pattern pat = Pattern.compile("[A-Z,a-z]+[A-Z,a-z0-9]*");
         Matcher mat = pat.matcher(str);
 
         if(mat.find() && mat.start() == 0) // Ищем функцию или переменную
@@ -125,7 +126,7 @@ public class Analysis_of_formulas {
             }
             else //Нашли переменную
             {
-                result.accumulator = getVariables(mat.group());
+                result.accumulator = Storage.getVariables(mat.group());
                 result.remainder = str.substring(mat.end());
             }
             return new Result(result.accumulator, result.remainder);
@@ -187,7 +188,6 @@ public class Analysis_of_formulas {
         Pattern pat = Pattern.compile("[0-9]+\\.?[0-9]*");
         Matcher mat;
 
-
         //Если число отрицательно
         if(str.charAt(0) == '-')
         {
@@ -201,18 +201,23 @@ public class Analysis_of_formulas {
         mat = pat.matcher(str);
 
         //Ищем подстроку, ктр является числом
-        if(mat.find())
+        if(mat.find()&& mat.start() == 0)
         {
             numberPart = Double.parseDouble(mat.group());
             remainderPart = str.substring(mat.end());
         }
         else
-            throw new Exception("can't get valid number in '" + str + "'");
+        {
+
+            Result res = PlusMinus(str);
+            numberPart = res.accumulator;
+            remainderPart = res.remainder;
+            //throw new Exception("can't get valid number in '" + str + "'");
+        }
 
 
         if(negative)
             numberPart = -numberPart;
-
 
         return new Result(numberPart, remainderPart);
     }
@@ -229,7 +234,7 @@ public class Analysis_of_formulas {
         for (String s: mass_str)
             new_str += s;
 
-        return Brackets_problem(new_str);
+        return new_str;
     }
 
     private void input_variable(String str)
@@ -240,43 +245,55 @@ public class Analysis_of_formulas {
         String new_str = str;
 
         //Удаляем функции
-        pat1 = Pattern.compile("[A-Z,a-z]+[A-Za-z0-9]*\\(.*?\\)");
+        pat1 = Pattern.compile("[A-Z,a-z]+[A-Za-z0-9]*\\(");
         mat1 = pat1.matcher(new_str);
 
         new_str = mat1.replaceAll("");
-        System.out.println(new_str);
+        //System.out.println(new_str);
 
         //Ищем в строке без функций названия переменных
-        pat2 = Pattern.compile("[A-Z,a-z]+[A-Z,a-z,0-9]*");//Шаблон переменной
+        pat2 = Pattern.compile("[A-Z,a-z]+[A-Z,a-z0-9]*");//Шаблон переменной
         mat2 = pat2.matcher(new_str);
 
         Scanner sc = new Scanner(System.in);
 
         while(mat2.find())
         {
-            if(getVariables(mat2.group()) == 0.0)
+            String s = mat2.group();
+            if(Storage.getVariables(mat2.group()) == Double.MIN_VALUE)
             {
                 System.out.println("Input variable " + mat2.group()+": ");
-                setVariables(mat2.group(),Double.parseDouble(sc.next()));
+                Storage.setVariables(mat2.group(),Double.parseDouble(sc.next()));
             }
         }
     }
 
-    private String Brackets_problem(String str)
+    private String Scientific_record_number(String str) //Парсим научную запись числа
     {
-        String str_new = str;
+        Pattern pat = Pattern.compile("[0-9]+\\.?[0-9]*[Ee]+?[\\+\\-]?[0-9]+");
+        Matcher mat = pat.matcher(str);
 
-        if(!str.isEmpty() && str.charAt(0) == '+' && str.charAt(1) == '(') str_new = str.substring(1);
-        if(!str.isEmpty() && str.charAt(0) == '-' && str.charAt(1) == '(')
-            str_new = "-1*" + str.substring(1);
+        while(mat.find())
+        {
+            double temp_double = Double.parseDouble(mat.group());
 
-        return str_new;
+            //Генерируем название переменной ктр будет хранить научную запись числа
+            String dict = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+            int str_length = 4;
 
-    }
+            Random rnd = new Random();
+            String name_var = "";
 
-    private String Scientific_record_number(String str)
-    {
-
+            for(int i = 0; i < str_length; i++)
+            {
+                int index = rnd.nextInt(dict.length());
+                name_var += dict.charAt(index);
+            }
+            //Заносим в hashmap переменную и значение числа
+            Storage.setVariables(name_var, temp_double);
+            str = mat.replaceFirst(name_var);
+            mat = pat.matcher(str);
+        }
         return str;
     }
 }

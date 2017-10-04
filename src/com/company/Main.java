@@ -1,6 +1,7 @@
 package com.company;
 
 import com.company.Classes.Analysis_of_formulas;
+import com.company.Classes.Storage;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -9,8 +10,9 @@ public class Main {
 
     public static void main(String[] args){
 
+        Storage.setVariables("x",2.);
+        String input_str ="-(4e0+4)* x + (sqrt(9) + (5e-1 + 3*2))";
 
-        String input_str ="sqrt(100) +cos(0)+sqrt";
 
         Analysis_of_formulas aof = new Analysis_of_formulas();
 
@@ -19,9 +21,6 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
-
 
 
 /*
