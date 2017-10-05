@@ -3,9 +3,7 @@ package com.company.Classes;
 import com.sun.org.apache.regexp.internal.RE;
 import com.sun.org.apache.xpath.internal.SourceTree;
 
-import java.util.HashMap;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -95,7 +93,7 @@ public class Analysis_of_formulas {
 
     private Result Brackets(String str) throws Exception
     {
-        if(!str.isEmpty() && str.charAt(0) == '(')
+        if(!str.isEmpty() && str.charAt(0) == '(' && str.charAt(1)!=')')
         {
             Result result = PlusMinus(str.substring(1));
 
@@ -105,9 +103,37 @@ public class Analysis_of_formulas {
             else throw new Exception("The brackets are not closed");
 
             return result;
-        }
+        }else
+            if(!str.isEmpty() && str.charAt(0) == '(' && str.charAt(1)==')') throw new Exception("In parentheses is empty");
 
         return FunctionVariable(str);
+    }
+
+    //Возвращаем индексы запятых, ктр находятся в скобочках
+    private String collect_commas(String str)
+    {
+        String count_comma = "";
+        int count_bracket = 0;
+
+        for(int i = 0, n = str.length(); i < n; i++)
+        {
+            if(str.charAt(i) == '(')
+                count_bracket++;
+
+            if(str.charAt(i) == ')')
+                count_bracket--;
+
+            if(str.charAt(i) == ',')
+                count_comma = count_comma + Integer.toString(i) + " ";
+
+            if(count_bracket == 0)
+            {
+                if(!count_comma.equals(""))
+                    count_comma = count_comma + Integer.toString(i) + " ";
+                break;
+            }
+        }
+        return count_comma;
     }
 
     private Result FunctionVariable(String str) throws Exception {
@@ -121,8 +147,32 @@ public class Analysis_of_formulas {
 
             if(!str.substring(mat.end()).isEmpty() && str.charAt(mat.end())== '('){ //Нашли функцию
 
-                result = Brackets(str.substring(mat.end()));
-                result.accumulator = Function(mat.group(),result.accumulator);
+                String s = collect_commas(str.substring(mat.end()));
+                ArrayList<Double> arrayList = new ArrayList();
+
+                if(s.equals(""))//Если один аргумент функции
+                {
+                    result = Brackets(str.substring(mat.end()));
+                    arrayList.add(result.accumulator);
+                    result.accumulator = Function(mat.group(),arrayList);
+                }
+                else//Несколько аргументов
+                {
+                    Pattern pat1 = Pattern.compile("[0-9]+");
+                    Matcher mat1 = pat1.matcher(s);
+
+                    int start_interval = 0, end_interval = 0;
+
+                    while (mat1.find())
+                    {
+                        end_interval = Integer.parseInt(mat1.group());
+                        arrayList.add(Brackets(str.substring(mat.end() + start_interval + 1, mat.end() + end_interval)).accumulator);
+                        start_interval = end_interval;
+                    }
+                    result.remainder = str.substring(mat.end() + end_interval+1);
+                    result.accumulator = Function(mat.group(),arrayList);
+                }
+
             }
             else //Нашли переменную
             {
@@ -136,7 +186,7 @@ public class Analysis_of_formulas {
     }
 
 
-    private double Function(String name_function, double accumulator) throws Exception {
+    private double Function(String name_function, ArrayList arrayList) throws Exception {
 
         name_function = name_function.toLowerCase();//Переводим название функции в нижний регистр
 
@@ -145,34 +195,67 @@ public class Analysis_of_formulas {
         switch (name_function)
         {
             case "sin":
-                result_math_function = Math.sin(Math.toRadians(accumulator));
+                result_math_function = Math.sin(Math.toRadians( (double)arrayList.get(0) ));
                 break;
             case "cos":
-                result_math_function = Math.cos(Math.toRadians(accumulator));
+                result_math_function = Math.cos(Math.toRadians((double)arrayList.get(0)));
                 break;
             case "pow":
-                //Возведение в степень, два аргумента, придумать что сделать
+                result_math_function = Math.pow((double)arrayList.get(0),(double)arrayList.get(1));
                 break;
             case "log":
-                result_math_function = Math.log(accumulator);
+                result_math_function = Math.log((double)arrayList.get(0));
                 break;
             case "abs":
-                result_math_function = Math.abs(accumulator);
+                result_math_function = Math.abs((double)arrayList.get(0));
                 break;
             case "mod":
-                //Остаток от деления, придумать
+                result_math_function = (double)arrayList.get(0) % (double)arrayList.get(1);
                 break;
             case "sqrt":
-                result_math_function = Math.sqrt(accumulator);
+                result_math_function = Math.sqrt((double)arrayList.get(0));
                 break;
             case "ceil":
-                result_math_function = Math.ceil(accumulator);
+                result_math_function = Math.ceil((double)arrayList.get(0));
                 break;
             case "floor":
-                result_math_function = Math.floor(accumulator);
+                result_math_function = Math.floor((double)arrayList.get(0));
                 break;
                 default:{
-                    throw new Exception("Invalid function name" + name_function);
+                    String s = Storage.getFunctions(name_function);
+
+                    if(s != null)
+                    {
+                        Pattern pat1, pat2;
+                        Matcher mat1, mat2;
+
+                        String new_str = s;
+
+                        //Удаляем функции
+                        pat1 = Pattern.compile("[A-Za-z]+[A-Za-z0-9]*\\(");
+                        mat1 = pat1.matcher(new_str);
+
+                        new_str = mat1.replaceAll("");
+
+                        //Ищем в строке без функций названия переменных
+                        pat2 = Pattern.compile("[A-Za-z]+[A-Za-z0-9]*");//Шаблон переменной
+                        mat2 = pat2.matcher(new_str);
+
+                        ArrayList<String> mass_str = new ArrayList();
+
+                        for(int i = 0; mat2.find(); i++)
+                        {
+                            if(mass_str.contains(mat2.group()))
+                            {
+                                s = s.replaceFirst(mat2.group(), String.valueOf(arrayList.get(mass_str.indexOf(mat2.group()))));
+                                continue;
+                            }
+                            mass_str.add(mat2.group());
+
+                            s = s.replaceFirst(mat2.group(), String.valueOf(arrayList.get(i)));
+                        }
+                        result_math_function = PlusMinus(s).accumulator;
+                    }
                 }
         }
         return result_math_function;
@@ -208,7 +291,6 @@ public class Analysis_of_formulas {
         }
         else
         {
-
             Result res = PlusMinus(str);
             numberPart = res.accumulator;
             remainderPart = res.remainder;
@@ -221,7 +303,6 @@ public class Analysis_of_formulas {
 
         return new Result(numberPart, remainderPart);
     }
-
 
     private String Del_Space(String str)
     {
@@ -245,14 +326,14 @@ public class Analysis_of_formulas {
         String new_str = str;
 
         //Удаляем функции
-        pat1 = Pattern.compile("[A-Z,a-z]+[A-Za-z0-9]*\\(");
+        pat1 = Pattern.compile("[A-Za-z]+[A-Za-z0-9]*\\(");
         mat1 = pat1.matcher(new_str);
 
         new_str = mat1.replaceAll("");
         //System.out.println(new_str);
 
         //Ищем в строке без функций названия переменных
-        pat2 = Pattern.compile("[A-Z,a-z]+[A-Z,a-z0-9]*");//Шаблон переменной
+        pat2 = Pattern.compile("[A-Za-z]+[A-Za-z0-9]*");//Шаблон переменной
         mat2 = pat2.matcher(new_str);
 
         Scanner sc = new Scanner(System.in);
