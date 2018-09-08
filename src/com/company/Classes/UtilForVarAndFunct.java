@@ -6,7 +6,7 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Storage {
+public class UtilForVarAndFunct {
 
     private static Map<String, Double> variables = new HashMap<>();//Для хранения переменных вводимых с клавиатуры
 
@@ -36,36 +36,36 @@ public class Storage {
     }
 
     //Functions
-    public static String varFunc(String s) {
+    public static String initVarFunc(String inputString) {
         Scanner sc = new Scanner(System.in);
-        while (Pattern.matches("var.+", s) || Pattern.matches("func.+",s)) {
+        while (Pattern.matches("var.+", inputString) || Pattern.matches("func.+", inputString)) {
 
-            if(Pattern.matches("var.+", s)) {
+            if(Pattern.matches("var.+", inputString)) {
                 //Парсим имя переменной
                 Pattern pat = Pattern.compile("var|=.+|\\s");
-                Matcher mat = pat.matcher(s);
+                Matcher mat = pat.matcher(inputString);
                 String varName = mat.replaceAll("");
                 //Парсим значение переменной
                 Pattern pat2 = Pattern.compile(".+=|\\s");
-                Matcher mat2 = pat2.matcher(s);
+                Matcher mat2 = pat2.matcher(inputString);
                 String varValue = mat2.replaceAll("");
                 if(!varName.equals("") && !varValue.equals(""))
-                    Storage.setVariables(varName, Double.parseDouble(varValue));
+                    UtilForVarAndFunct.setVariables(varName, Double.parseDouble(varValue));
             }
-            else if(Pattern.matches("func.+", s)) {
+            else if(Pattern.matches("func.+", inputString)) {
                 //Парсим имя функции
                 Pattern pat = Pattern.compile("func|=.+|\\s");
-                Matcher mat = pat.matcher(s);
+                Matcher mat = pat.matcher(inputString);
                 String funcName = mat.replaceAll("");
                 //Парсим тело функции
                 Pattern pat2 = Pattern.compile(".+=|\\s");
-                Matcher mat2 = pat2.matcher(s);
+                Matcher mat2 = pat2.matcher(inputString);
                 String funcBody = mat2.replaceAll("");
                 if(!funcName.equals("") && !funcBody.equals(""))
-                    Storage.setFunctions(funcName, funcBody);
+                    UtilForVarAndFunct.setFunctions(funcName, funcBody);
             }
-            s =  sc.nextLine();
+            inputString =  sc.nextLine();
         }
-        return s;
+        return inputString;
     }
 }

@@ -1,7 +1,7 @@
 package com.company;
 
 import com.company.Classes.AnalysisOfTheFormula;
-import com.company.Classes.Storage;
+import com.company.Classes.UtilForVarAndFunct;
 import java.util.Scanner;
 
 
@@ -25,7 +25,7 @@ public class Main {
         String inputString = sc.nextLine();
 
         while (!inputString.equals("stop")) {
-            String input_str = Storage.varFunc(inputString);//вводим переменные и функции
+            String inputStr = UtilForVarAndFunct.initVarFunc(inputString);//вводим переменные и функции
 
             //String input_str ="-(4e0+4)* x + (sqrt(9) + (5e-1 + 3*2))  +mod(x,3)";
             //String input_str ="f(2,3) + x";
@@ -33,7 +33,7 @@ public class Main {
             AnalysisOfTheFormula aof = new AnalysisOfTheFormula();
 
             try {
-                System.out.println("result: " + aof.calculate(input_str));
+                System.out.println("result: " + aof.calculate(inputStr));
             } catch (Exception e) {
                 e.printStackTrace();
             }

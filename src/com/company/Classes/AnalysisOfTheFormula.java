@@ -162,7 +162,7 @@ public class AnalysisOfTheFormula {
 
             }
             else{ //Нашли переменную
-                result.accumulator = Storage.getVariables(mat.group());
+                result.accumulator = UtilForVarAndFunct.getVariables(mat.group());
                 result.remainder = str.substring(mat.end());
             }
             return new Result(result.accumulator, result.remainder);
@@ -206,7 +206,7 @@ public class AnalysisOfTheFormula {
                 resultMathFunction = Math.floor(arrayList.get(0));
                 break;
             default:{
-                String bodyFunction = Storage.getFunctions(nameFunction);
+                String bodyFunction = UtilForVarAndFunct.getFunctions(nameFunction);
 
                 if(bodyFunction != null) {
                     Pattern pat1, pat2;
@@ -310,9 +310,9 @@ public class AnalysisOfTheFormula {
 
         while(mat2.find()){
             String varName = mat2.group();
-            if(Storage.getVariables(varName) == Double.MIN_VALUE) {
+            if(UtilForVarAndFunct.getVariables(varName) == Double.MIN_VALUE) {
                 System.out.println("Input variable " + varName + ": ");
-                Storage.setVariables(varName, Double.parseDouble(sc.next()));
+                UtilForVarAndFunct.setVariables(varName, Double.parseDouble(sc.next()));
             }
         }
     }
@@ -328,7 +328,7 @@ public class AnalysisOfTheFormula {
             String nameVar = Util.getRandomString(4);
 
             //Заносим в hashmap переменную и значение числа
-            Storage.setVariables(nameVar, parseDouble);
+            UtilForVarAndFunct.setVariables(nameVar, parseDouble);
 
             //Заменяем научную запись числа на случайную строку
             str = mat.replaceFirst(nameVar);
